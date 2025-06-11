@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Covid Συσταδοποιητής</title>
+        <!-- Bootstrap -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	
+        <!-- MDB | For flags -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/3.3.0/mdb.min.css" rel="stylesheet" />
+
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+	<body>
+
+        <!-- START: JUMBOTRON -->
+        <div class="jumbotron jumbotron-fluid">
+            <div class="container">
+                <h1 class="display-4">Covid Συσταδοποιητής</h1>
+                <p class="lead">Συμπληρώστε την φόρμα παρακάτω για να λάβετε αποτελέσματα.</p>
+            </div>
+        </div>
+        <!-- END: JUMBOTRON -->
+
+        <!-- START: FORM -->
+        <div class="container rounded" style="background-color: gainsboro;">
+            <div class="row">
+                <div class="col-md-10 offset-md-1">
+                    <br />
+					<form>
+						<div class="form-group">
+							<label for="year">Έτος:</label>
+							<input type="number" step="1" min="2020", max="2023" name="year" class="form-control" id="year" aria-describedby="yearHelp" placeholder="Εισαγωγή Έτος" required>
+						</div>
+
+						<div class="form-group">
+							<label for="week">Εβδομάδα:</label>
+							<input type="number" step="1" min="1", max="53" name="week" class="form-control" id="week" aria-describedby="weekHelp" placeholder="Εισαγωγή Εβδομάδας" required>
+						</div>
+
+                        <div class="form-group">
+							<label for="cluster-amount">Συστάδες:</label>
+							<input type="number" step="1" min="2", max="10" name="cluster-amount" class="form-control" id="cluster-amount" aria-describedby="cluster-amountHelp" placeholder="Δώστε τον αριθμό των Συστάδων" required>
+						</div>
+
+						<button type="submit" class="btn btn-dark">Εκτέλεση</button>
+					</form>
+                </div>
+            </div>
+            <br />
+        </div>
+        <br />
+        <!-- END: FORM -->
+
+
+        <div id="results" class="container rounded" style="background-color: gainsboro; display: none;">
+            <div class="col-md-10 offset-md-1">
+                <br />
+                <h3>Αποτελέσματα</h3>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Γράφος</h5>
+                        <br />
+                        <div id="graph">
+                            <!-- AUTOMATED CONTENT -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Συστάδες</h5>
+                        <br />
+                        <div id="clusters">
+                            <!-- AUTOMATED CONTENT -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br />
+        
+
+        <!-- START: jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <!-- END: jQuery first, then Popper.js, then Bootstrap JS -->
+	
+        <!-- START: Custom JS -->
+        <script src="graph.js"></script>
+		<script src="caller.js"></script>
+		
+        <script>
+            color_num = {
+                0 : "red",
+                1 : "blue",
+                2 : "green",
+                3 : "yellow",
+                4 : "orange",
+                5 : "purple",
+                6 : "pink",
+                7 : "brown",
+                8 : "gray",
+                9 : "cyan"
+            }
+
+            $(document).ready(function() {
+				$("form").submit(function(e) {
+					e.preventDefault();
+
+                    let year = $("#year").val()+"";
+                    let week = $("#week").val()+"";
+                    let cluster_amount = $("#cluster-amount").val();
+
+                    // Check for not available weeks (e.g. 2020-49) | Missing data
+                    if ( year == "2020") {
+                        if ( week != "52" && week != "53" ) {
+                            alert("Δεν υπάρχουν δεδομένα για την εβδομάδα "+week+" του έτους "+year+"!")
+                            return;
+                        }
+                    }
+                    else if ( year == "2021" || year == "2022" ) {
+                        if ( week == "53"){
+                            alert("Δεν υπάρχουν δεδομένα για την εβδομάδα "+week+" του έτους "+year+"!")
+                            return;
+                        }
+                    }
+                    else if ( year == "2023" ) {
+                        let week_num = parseInt(week)
+
+                        if ( week_num > 24) {
+                            alert("Δεν υπάρχουν δεδομένα για την εβδομάδα "+week+" του έτους "+year+"!")
+                            return;
+                        }
+
+                        let cluster_amount_num = parseInt(cluster_amount)
+
+                        if ( week_num == 24 && cluster_amount_num > 2) {
+                            alert("Στην εβδομάδα "+week+" του έτους "+year+" υπάρχουν μόνο 2 χώρες!")
+                            return;
+                        }
+                    }
+
+                    if ( week.length == 1 ) {
+                        week = "0"+week;
+                    }
+
+                    // Show results
+                    $("#results").show();
+
+                    getResults(year, week, cluster_amount, function(response) {
+                        console.log(response.status)
+                        response.json().then(function(data) {
+                            console.log(data);
+                            let codes = data.codes;
+                            let colors = data.colors;
+
+                            for(let i = 1; i < 10; i++) {
+                                for(let j = colors.length; j > 0; j--) {
+                                    if(colors[j] < colors[j - 1]) {
+                                        let temp = colors[j];
+                                        colors[j] = colors[j - 1];
+                                        colors[j - 1] = temp;
+
+                                        temp = codes[j];
+                                        codes[j] = codes[j - 1];
+                                        codes[j - 1] = temp;
+                                    }
+                                }
+                            }
+
+                            
+
+                            printGraph(codes, colors);
+                            printClusters(codes, colors);
+                        });
+                    });
+                });
+			});
+
+            // codes  = ['AT', 'BE', 'BG', 'HR', 'CY', 'IT', 'FR', 'DE', 'DK', 'EE', 'FI', 'EL', 'HU', 'IE', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'CZ']
+            // colors = [0, 1, 0, 1, 1]
+            // colors = [1, 0, 1, 0, 0]
+            // colors = [3, 4, 1, 0, 2]
+            // colors = [0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 0, 1, 2]
+
+            function printGraph(codes, colors) {
+                // Get the container's width and height
+                var container_width  = document.getElementById("graph").offsetWidth;
+
+                // Get the container element
+                var container = document.getElementById("graph");
+
+                // Clear the container element
+                container.innerHTML = "";
+
+                // data = {
+                //     "nodes": [ {id: "node1", group: 0}, {id: "node2", group: 1}, {id: "node3", group: 0} ],
+                //     "links": [ {source: "node1", target: "node2", value: 1}, {source: "node2", target: "node3", value: 1} ]
+                // }
+
+                let data = {
+                    "nodes": [],
+                    "links": []
+                }
+
+                for (let i = 0; i < codes.length; i++) {
+                    data.nodes.push({id: codes[i], group: colors[i]});
+                }
+
+                for (let i = 0; i < codes.length; i++) {
+                    for (let j = 0; j < codes.length; j++) {
+                        if (i != j) {
+                            data.links.push({source: codes[i], target: codes[j], value: 1});
+                        }
+                    }
+                }
+
+                let graph_element = makeChart(data, container_width);
+
+                // Add the graph element to the container
+                container.appendChild(graph_element);
+
+            }
+
+            function printClusters(codes, colors) {
+
+                // Get the container element
+                var container = document.getElementById("clusters");
+
+                // Clear the container element
+                container.innerHTML = "";
+
+                // Find the unique colors
+                let unique_colors = colors.filter((item, i, ar) => ar.indexOf(item) === i);
+
+                // sort the unique colors in ascending order
+                unique_colors.sort();
+                console.log(unique_colors)
+                
+                // For each unique color
+                for (let i = 0; i < unique_colors.length; i++) {
+                    // Create a new div
+                    var div = document.createElement("div");
+                    div.className = "row rounded";
+                    div.style = "border: 5px solid "+color_num[unique_colors[i]]+";";
+
+                    // Show the number of the cluster   
+                    let p_element = document.createElement("p");
+                    p_element.innerHTML = "<u>Συστάδα "+(i+1)+"</u>";
+                    div.appendChild(p_element);
+
+                    // For each country
+                    for (let j = 0; j < colors.length; j++) {
+                        // If the country has the same color as the current unique color
+                        if (colors[j] == unique_colors[i]) {
+                            // Create a new div
+                            var div2 = document.createElement("div");
+                            div2.className = "col-md";
+
+                            let p_element = document.createElement("p");
+
+                            // Get the country code
+                            let code = codes[j];
+
+                            // Create a new flag
+                            let flag = document.createElement("i");
+                            flag.className = "flag flag-"+code.toLowerCase();
+
+                            // Append the flag and the country code to the paragraph
+                            p_element.appendChild(flag);
+                            p_element.appendChild(document.createElement("br"));
+                            p_element.appendChild(document.createTextNode(code));
+
+                            // Append the flag to the div
+                            div2.appendChild(p_element);
+
+                            // Append the div to the container
+                            div.appendChild(div2);
+                        }
+
+                    }
+
+                    // Make a good looking container for the cluster
+                    let cont_div = document.createElement("div");
+                    cont_div.className = "col-md bg-light rounded";
+
+                    cont_div.appendChild(div);
+
+                    // Append the div to the container                    
+                    container.appendChild(cont_div);
+
+                    // Add a break
+                    container.appendChild(document.createElement("br"));
+                }
+                
+            }
+        </script>
+        <!-- END: Custom JS -->
+    </body>
+</html>
